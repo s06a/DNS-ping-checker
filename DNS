@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+
+# A simple program to find which dns server works better on your network.
+
+# init files
+echo "" > dnsResult
+
+pingChecker() {
+	local ip=$1
+	local result=$(timeout $2 ping -qc $2 $ip 2>&1 | tail -1 | awk '{print $4}' | cut -d '/' -f 2)
+	echo $ip $result >> dnsResult
+}
+
+# number of packets and also timeout
+num=$1
+
+for dnsServer in $(cat dnsList); do
+	pingChecker $dnsServer $num &
+done
+
+wait
+
+echo "Top 5 DNS servers"
+cat dnsResult | awk 'NF>1' | grep -v "56(84)" | sort -nk2 | column -t | head -5
